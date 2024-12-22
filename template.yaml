@@ -1,0 +1,75 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: 'AWS::Serverless-2016-10-31'
+Globals:
+  Function:
+    Runtime: java17
+    VpcConfig:
+       SecurityGroupIds:
+           - !Ref VPCSecurityGroupIds
+       SubnetIds:
+           - !Ref VPCSubnetIds1
+           - !Ref VPCSubnetIds2
+    CodeUri: target/springcorepoc.lambda-1.0.jar
+  Api:
+    OpenApiVersion: 3.0.1
+Resources:
+ ScheduleEventFunction:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Handler: com.springcore.lambda.poc.handler.EventProcessor
+      FunctionName: !Sub 'EventProcessor-Function-${StageName}'
+      Role: !Ref LambdaExecutionRole
+      MemorySize: 512
+      Environment:
+        Variables:
+          ENV: !Ref StageName
+      Events:
+        ScheduledEvent:
+          Type: Schedule
+          Properties:
+            Schedule: cron(0/5 * * * ? *)
+ Api:
+  Type: AWS::Serverless::Api
+  Properties:
+    StageName: !Ref StageName
+    OpenApiVersion: 3.0.1
+ GetDemoAPIFunction:
+   Type: 'AWS::Serverless::Function'
+   Properties:
+     Handler: com.springcore.lambda.poc.handler.SpringAPIHandler
+     FunctionName: !Sub 'GetDemoAPIFunction-Function-${StageName}'
+     Role: !Ref LambdaExecutionRole
+     Timeout: 29
+     Environment:
+       Variables:
+         SESSION_TIME_OUT: !Ref SessionTimeOut
+     Events:
+       SpringDemoApi:
+         Type: Api
+         Properties:
+           Path: /demo
+           Method: get
+           RestApiId: !Ref Api
+Parameters:
+  SessionTimeOut:
+    Type: String
+    Default: '10'
+  VPCSecurityGroupIds:
+    Type: String
+    Description: List of Security Group IDs
+  VPCSubnetIds1:
+    Type: String
+    Description: List of Subnet IDs
+  VPCSubnetIds2:
+    Type: String
+    Description: List of Subnet IDs
+  StageName:
+    Type: String
+    Description: stage name
+  LambdaExecutionRole:
+    Type: String
+    Description: ARN of the Lambda execution role
+Outputs:
+  ApiUrl:
+    Description: "URL of the API Gateway"
+    Value: !Sub "https://${Api}.execute-api.${AWS::Region}.amazonaws.com/${StageName}/"

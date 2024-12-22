@@ -1,0 +1,16 @@
+version = 0.1
+[default]
+[default.global.parameters]
+
+[default.deploy.parameters]
+capabilities = "CAPABILITY_IAM"
+confirm_changeset = true
+
+
+[dev.deploy.parameters]
+s3_bucket = "<<bucket-name>>"
+stack_name = "spring-lambda-poc-sam-deployment"
+s3_prefix = "event-scheduler-dev"
+region = "us-east-1"
+capabilities = "CAPABILITY_IAM"
+parameter_overrides = "LambdaExecutionRole=arn:aws:iam::<<account-number>>:role/lambda-execution-role-dev StageName=dev VPCSecurityGroupIds=sg-<<sg-id>> VPCSubnetIds1=subnet-<<subnet-id1>> VPCSubnetIds2=subnet-<<subnet-id1>>"
